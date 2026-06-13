@@ -3,7 +3,31 @@ import json
 import signal
 import subprocess
 import sys
+import shutil
 from pathlib import Path
+from datetime import datetime
+
+def reset_dryrun_db():
+    """Backup existing dry-run DB and initialize a fresh one."""
+    dry_run_db = Path("tradesv3.dryrun.sqlite")
+    backup_dir = Path("user_data/backups/dryrun_db_backups")
+    
+    if dry_run_db.exists():
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        backup_file = backup_dir / f"tradesv3.dryrun.sqlite.{timestamp}"
+        shutil.copy2(dry_run_db, backup_file)
+        print(f"✓ Dry-run DB backed up to: {backup_file}")
+        
+        dry_run_db.unlink()
+        print(f"✓ Previous dry-run DB deleted. Fresh DB will be created on startup.")
+        
+        # Also clean up associated WAL and SHM files
+        wal_file = Path("tradesv3.dryrun.sqlite-wal")
+        shm_file = Path("tradesv3.dryrun.sqlite-shm")
+        for file in [wal_file, shm_file]:
+            if file.exists():
+                file.unlink()
 
 def merge_config(config_path: Path, secrets_path: Path, merged_path: Path, disable_telegram: bool = False) -> Path:
     with config_path.open("r", encoding="utf-8") as f:
@@ -97,6 +121,9 @@ def main():
     merged_config_path = Path("user_data") / "config_merged_with_secrets.json"
 
     merge_config(base_config_path, secrets_path, merged_config_path, disable_telegram=args.disable_telegram)
+    
+    # Reset dry-run DB before starting (backup existing trades and start fresh)
+    reset_dryrun_db()
 
     command = [sys.executable, "-m", "freqtrade"] + freqtrade_args + ["--config", str(merged_config_path)]
     process = subprocess.Popen(command)

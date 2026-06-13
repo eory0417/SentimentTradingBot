@@ -93,7 +93,7 @@ class HybridSentimentStrategy(IStrategy):
             trailing_retrace = float(self.custom_params.get("short_trailing_drop", 0.5))
             trailing_retrace = min(max(trailing_retrace, 0.0), 1.0)
 
-            if highest_profit <= -take_profit:
+            if highest_profit >= take_profit:
                 # 최고 수익 대비 리트레이스 비율로 청산
                 threshold_profit = highest_profit * (1.0 - trailing_retrace)
                 if current_profit >= threshold_profit:
@@ -177,11 +177,6 @@ class HybridSentimentStrategy(IStrategy):
 
     def populate_entry_trend(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:
         pair = metadata.get("pair", "Unknown")
-        # Avoid generating new entry signals for pairs that already have an open trade
-        try:
-            open_for_pair = any(t.pair == pair for t in Trade.get_open_trades())
-        except Exception:
-            open_for_pair = False
         if hasattr(self, 'config') and self.config.get('runmode') in ['live', 'dry_run']:
             from datetime import datetime, timedelta, timezone
             now = datetime.now(timezone.utc)
@@ -300,10 +295,7 @@ class HybridSentimentStrategy(IStrategy):
             if latest_conditions['macd_bullish']:
                 signal_reasons.append('MACD')
             reason_text = ' + '.join(signal_reasons)
-            if open_for_pair:
-                logger.info(f"    ⛔ 진입스킵(이미 오픈포지션): {pair} ({reason_text})")
-            else:
-                logger.info(f"    ✅ 진입허용: {pair} ({reason_text})")
+            logger.info(f"    ✅ 진입허용: {pair} ({reason_text})")
         else:
             failure_reasons = []
             if not latest_conditions["macro_bullish"]:
@@ -315,18 +307,16 @@ class HybridSentimentStrategy(IStrategy):
             logger.info(f"    ❌ 진입불가: {pair} - 사유: {', '.join(failure_reasons)}")
 
         # 🔧 개선: AND 체인 단순화 - do_predict 제거, 신호 조건만 유지
-        if not open_for_pair:
-            dataframe.loc[
-                macro_bullish
-                & (news_signal | bullish_div | pullback_entry | macd_bullish)
-                & (dataframe["close"] > dataframe["close"].shift(20)),  # 최근 20분 상승 추세
-                ["enter_long", "enter_tag"]
-            ] = (1, "Long_Hybrid")
+        # 📝 Note: Freqtrade's max_open_trades and wallet management automatically prevents duplicate entry
+        dataframe.loc[
+            macro_bullish
+            & (news_signal | bullish_div | pullback_entry | macd_bullish)
+            & (dataframe["close"] > dataframe["close"].shift(20)),  # 최근 20분 상승 추세
+            ["enter_long", "enter_tag"]
+        ] = (1, "Long_Hybrid")
 
-            if entry_signal:
-                logger.info(f"    ▶ {pair} 장기 진입 신호 생성됨 (Long_Hybrid)")
-        else:
-            logger.debug(f"Skipped entry assignment for {pair} because an open trade exists")
+        if entry_signal:
+            logger.info(f"    ▶ {pair} 장기 진입 신호 생성됨 (Long_Hybrid)")
 
         # --------------------------------------------------------------------------
         # 📉 개선된 SHORT 진입 조건식
@@ -354,15 +344,12 @@ class HybridSentimentStrategy(IStrategy):
             & (dataframe["macd_diff"] < 0)
         )
 
-        if not open_for_pair:
-            dataframe.loc[
-                macro_bearish
-                & (bearish_news_signal | bearish_div | trend_short | macd_bearish)
-                & (dataframe["close"] < dataframe["close"].shift(20)),  # 최근 20분 하락 추세
-                ["enter_short", "enter_tag"]
-            ] = (1, "Short_Hybrid")
-        else:
-            logger.debug(f"Skipped short entry assignment for {pair} because an open trade exists")
+        dataframe.loc[
+            macro_bearish
+            & (bearish_news_signal | bearish_div | trend_short | macd_bearish)
+            & (dataframe["close"] < dataframe["close"].shift(20)),  # 최근 20분 하락 추세
+            ["enter_short", "enter_tag"]
+        ] = (1, "Short_Hybrid")
 
         return dataframe
 
