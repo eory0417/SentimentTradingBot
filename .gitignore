@@ -1,0 +1,59 @@
+# Secrets and private config
+user_data/secrets.json
+user_data/config-private.json
+user_data/config_merged_with_secrets.json
+secrets.json
+
+# Freqtrade runtime data
+user_data/data/
+user_data/logs/
+user_data/backtest_results/
+user_data/hyperopt_results/
+user_data/plot/
+user_data/models/
+user_data/modules/
+
+# SQLite databases and temporary files
+tradesv3.sqlite
+tradesv3.dryrun.sqlite
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# News cache
+user_data/data/news_cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+*.egg
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Excel and temporary files
+*.xlsx
+*.xls
+*.tmp
+
+# Environment-specific
+config_freqai.json
+execution_engine.py

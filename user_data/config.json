@@ -1,0 +1,128 @@
+{
+    "$schema": "https://schema.freqtrade.io/schema.json",
+    "max_open_trades": 3,
+    "stake_currency": "USDT",
+    "stake_amount": 100,
+    "tradable_balance_ratio": 0.99,
+    "fiat_display_currency": "USD",
+    "dry_run": false,
+    "dry_run_wallet": 1000,
+    "cancel_open_orders_on_exit": false,
+    "trading_mode": "futures",
+    "margin_mode": "isolated",
+    "trailing_stop": false,
+    "unfilledtimeout": {
+        "entry": 10,
+        "exit": 10,
+        "exit_timeout_count": 0,
+        "unit": "minutes"
+    },
+    "entry_pricing": {
+        "price_side": "same",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "same",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "exchange": {
+        "name": "binance",
+        "key": "",
+        "secret": "",
+        "ccxt_config": {},
+        "ccxt_async_config": {},
+        "pair_whitelist": [
+            "BTC/USDT:USDT",
+            "ETH/USDT:USDT",
+            "SOL/USDT:USDT",
+            "XRP/USDT:USDT",
+            "DOGE/USDT:USDT"
+        ],
+        "pair_blacklist": []
+    },
+    "pairlists": [
+        {
+            "method": "StaticPairList"
+        }
+    ],
+    "api_server": {
+        "enabled": false,
+        "listen_ip_address": "127.0.0.1",
+        "listen_port": 8080,
+        "verbosity": "error",
+        "jwt_secret_key": "somethingRandomSomethingRandom123_sentiment_bot_2026",
+        "CORS_origins": [],
+        "username": "freqtrader",
+        "password": "freqtrader"
+    },
+    "bot_name": "SentimentTradingBot",
+    "initial_state": "running",
+    "force_entry_enable": false,
+    "internals": {
+        "process_throttle_secs": 5
+    },
+    "timeframe": "1m",
+    "strategy": "HybridSentimentStrategy",
+    "custom_trader_params": {
+        "leverage_value": 2.5,
+        "atr_multiplier": 2.798,
+        "long_take_profit": 0.04,
+        "short_take_profit": 0.04,
+        "long_trailing_drop": 0.5,
+        "short_trailing_drop": 0.5,
+        "long_stoploss": -0.02,
+        "short_stoploss": -0.02
+    },
+    "freqai": {
+        "include_timeframes": ["5m"],
+        "enabled": true,
+        "purge_old_models": false,
+        "train_period_days": 7,
+        "backtest_period_days": 7,
+        "live_retrain_hours": 24,
+        "identifier": "ai-hybrid-bot-1m_v5",
+        "feature_pipeline_config": {
+            "plugins": [
+                "ScaleFeatures"
+            ]
+        },
+        "label_pipeline_config": {
+            "plugins": [
+                "ScaleFeatures"
+            ]
+        },
+        "feature_parameters": {
+            "include_timeframes": ["5m"],
+            "include_shifted_candles": 2,
+            "DI_threshold": 1.0,
+            "weight_factor": 0.95,
+            "indicator_periods_candles": [10, 20],
+            "include_corr_pairlist": ["BTC/USDT:USDT"]
+        },
+        "data_split_parameters": {
+            "test_size": 0.25,
+            "shuffle": false
+        },
+        "model_training_parameters": {
+            "n_epochs": 50,
+            "learning_rate": 0.001,
+            "trainer_kwargs": {
+                "n_steps": null,
+                "batch_size": 32,
+                "n_epochs": 50
+            },
+            "model_kwargs": {
+                "hidden_dim": 128,
+                "dropout_percent": 0.2,
+                "n_layer": 2
+            }
+        }
+    }
+}
